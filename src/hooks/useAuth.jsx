@@ -7,33 +7,88 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Listen for storage changes (across tabs)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'authToken' || e.key === 'user') {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      if (token) {
-        const userData = await authAPI.getCurrentUser();
-        setUser(userData);
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        const parsedUser = JSON.parse(userData);
+        // Validate that we have required user data
+        if (parsedUser && parsedUser.userId && parsedUser.token) {
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+        } else {
+          clearAuthData();
+        }
+      } else {
+        clearAuthData();
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      localStorage.removeItem('authToken');
+      clearAuthData();
     } finally {
       setLoading(false);
     }
   };
 
+  const clearAuthData = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   const login = async (credentials) => {
-    const response = await authAPI.login(credentials);
-    if (response.token) {
-      localStorage.setItem('authToken', response.token);
-      setUser(response.user);
+    try {
+      setLoading(true);
+      const response = await authAPI.login(credentials);
+      
+      if (response.token) {
+        // Ensure user data structure is consistent
+        const userData = {
+          ...response,
+          userId: response.userId || credentials.userId,
+          name: response.name || credentials.userId,
+          designation: response.designation || 'User',
+          token: response.token
+        };
+        
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Update state synchronously
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return userData;
+      } else {
+        throw new Error('No token received from server');
+      }
+    } catch (error) {
+      clearAuthData();
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    return response;
   };
 
   const logout = async () => {
@@ -42,8 +97,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('authToken');
-      setUser(null);
+      clearAuthData();
     }
   };
 
@@ -52,7 +106,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated
   };
 
   return (

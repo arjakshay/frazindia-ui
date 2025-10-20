@@ -1,8 +1,8 @@
-// src/components/Auth/Login.jsx
-import React, { useState, useEffect } from 'react';
+// src/pages/Login.jsx
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Loader2, Shield } from 'lucide-react';
-import { authAPI } from '../services/api';
+import { Eye, EyeOff, User, AlertCircle, CheckCircle, Loader2, Shield, Sparkles } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -13,15 +13,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      navigate('/dashboard');
-    }
-  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,7 +24,6 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
-    // Clear errors when user starts typing
     if (error) setError('');
   };
 
@@ -51,26 +45,14 @@ const Login = () => {
         password: formData.password
       };
 
-      const response = await authAPI.login(credentials);
+      await login(credentials);
       
-      // Store token - assuming your backend returns a token in the response
-      if (response.token) {
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        
-        setSuccess('Login successful! Redirecting to dashboard...');
-        
-        // Success animation delay before redirect
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 1500);
-      } else {
-        setError('Invalid response from server');
-      }
+      setSuccess('Login successful! Redirecting...');
+      navigate('/dashboard', { replace: true });
+      
     } catch (err) {
       console.error('Login error:', err);
       
-      // Handle different error types
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.status === 401) {
@@ -89,7 +71,6 @@ const Login = () => {
     }
   };
 
-  // Demo credentials helper (remove in production)
   const fillDemoCredentials = () => {
     setFormData({
       userId: 'demo_user',
@@ -98,54 +79,64 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 relative overflow-hidden">
-      {/* Animated Background Elements */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-white to-amber-100 dark:from-gray-900 dark:via-gray-800 dark:to-amber-900/20 p-4 relative overflow-hidden">
+      {/* Enhanced Animated Background */}
       <div className="absolute inset-0">
-        <div className="absolute -top-40 -right-32 size-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-32 size-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse [animation-delay:2000ms]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 bg-indigo-500/5 rounded-full blur-3xl animate-pulse [animation-delay:4000ms]" />
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-amber-400/20 dark:bg-amber-600/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-amber-500/20 dark:bg-amber-700/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-300/10 dark:bg-amber-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
+        
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-amber-400/30 dark:bg-amber-500/20 rounded-full animate-bounce" />
+        <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-amber-500/20 dark:bg-amber-600/10 rounded-full animate-bounce delay-500" />
+        <div className="absolute bottom-1/3 left-1/2 w-4 h-4 bg-amber-600/10 dark:bg-amber-700/5 rounded-full animate-bounce delay-1000" />
       </div>
 
-      {/* Login Card */}
+      {/* Enhanced Login Card */}
       <div className="relative w-full max-w-md">
-        {/* Card with glass morphism effect */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 transition-all duration-500 hover:shadow-3xl">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-amber-200/60 dark:border-amber-700/30 p-8 transform transition-all duration-300 hover:shadow-amber-200/20 dark:hover:shadow-amber-900/20">
           
-          {/* Header */}
+          {/* Enhanced Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center size-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 transition-transform duration-300 hover:scale-110 shadow-lg">
-              <Shield className="size-8 text-white" />
+            <div className="relative inline-flex mb-4">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl blur-md opacity-75 animate-pulse"></div>
+              <div className="relative w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-white" />
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {import.meta.env.VITE_APP_NAME || 'FrazIndia Reports'}
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-700 to-amber-800 dark:from-amber-300 dark:to-amber-200 bg-clip-text text-transparent mb-2">
+              Front India
             </h1>
-            <p className="text-white/60 text-lg">Sign in to your account</p>
+            <p className="text-amber-700/80 dark:text-amber-300/80 text-lg">Welcome back! Please sign in</p>
           </div>
 
-          {/* Alerts */}
+          {/* Enhanced Alerts */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
-              <AlertCircle className="size-5 text-red-300 shrink-0" />
-              <span className="text-red-100 text-sm flex-1">{error}</span>
+            <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-xl flex items-center gap-3 animate-shake">
+              <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400" />
+              <span className="text-red-700 dark:text-red-300 text-sm flex-1">{error}</span>
             </div>
           )}
           
           {success && (
-            <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
-              <CheckCircle className="size-5 text-green-300 shrink-0" />
-              <span className="text-green-100 text-sm flex-1">{success}</span>
+            <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-xl flex items-center gap-3 animate-pulse">
+              <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+              <span className="text-green-700 dark:text-green-300 text-sm flex-1">{success}</span>
             </div>
           )}
 
-          {/* Login Form */}
+          {/* Enhanced Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* User ID Field */}
+            {/* Enhanced User ID Field */}
             <div className="space-y-3">
-              <label htmlFor="userId" className="flex items-center gap-2 text-white/80 text-sm font-medium">
-                <User className="size-4" />
+              <label htmlFor="userId" className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-medium">
+                <User className="w-4 h-4" />
                 <span>User ID</span>
               </label>
-              <div className="relative group">
+              <div className="relative">
                 <input
                   type="text"
                   id="userId"
@@ -153,24 +144,20 @@ const Login = () => {
                   value={formData.userId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-300 group-hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                  className="w-full px-4 py-3.5 bg-white dark:bg-gray-700 border border-amber-300 dark:border-amber-600 rounded-xl text-amber-900 dark:text-white placeholder-amber-400 dark:placeholder-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 dark:focus:border-amber-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   placeholder="Enter your user ID"
                   disabled={isLoading}
                   autoComplete="username"
                 />
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 transition-all duration-500 opacity-0 group-hover:opacity-100 pointer-events-none" />
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Enhanced Password Field */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="flex items-center gap-2 text-white/80 text-sm font-medium">
-                  <Lock className="size-4" />
-                  <span>Password</span>
-                </label>
-              </div>
-              <div className="relative group">
+              <label htmlFor="password" className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-medium">
+                <span>Password</span>
+              </label>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
@@ -178,50 +165,54 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3.5 pe-12 bg-white/5 border border-white/15 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-300 group-hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                  className="w-full px-4 py-3.5 pr-12 bg-white dark:bg-gray-700 border border-amber-300 dark:border-amber-600 rounded-xl text-amber-900 dark:text-white placeholder-amber-400 dark:placeholder-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 dark:focus:border-amber-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   placeholder="Enter your password"
                   disabled={isLoading}
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
-                  className="absolute end-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors duration-200 p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-all duration-200 p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 disabled:opacity-50"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 transition-all duration-500 opacity-0 group-hover:opacity-100 pointer-events-none" />
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Enhanced Action Buttons */}
             <div className="flex flex-col gap-4">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white rounded-xl font-semibold text-lg hover:from-amber-600 hover:to-amber-700 dark:hover:from-amber-700 dark:hover:to-amber-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-amber-300/30 dark:hover:shadow-amber-900/30 transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="size-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Signing In...</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="size-5" />
                     <span>Sign In</span>
+                    <div className={`w-5 h-5 transform transition-transform duration-300 ${isHovered ? 'translate-x-1' : 'translate-x-0'}`}>
+                      <div className="w-2 h-2 bg-white rounded-full animate-ping absolute"></div>
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
                   </>
                 )}
               </button>
 
-              {/* Demo Credentials Button (Remove in production) */}
-              {import.meta.env.VITE_APP_ENV === 'development' && (
+              {/* Enhanced Demo Credentials Button */}
+              {process.env.NODE_ENV === 'development' && (
                 <button
                   type="button"
                   onClick={fillDemoCredentials}
                   disabled={isLoading}
-                  className="w-full py-2.5 px-4 bg-white/5 border border-white/10 text-white/70 rounded-xl font-medium text-sm hover:bg-white/10 hover:text-white transition-all duration-300 disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 rounded-xl font-medium text-sm hover:bg-amber-200 dark:hover:bg-amber-900/50 hover:text-amber-800 dark:hover:text-amber-200 transition-all duration-300 disabled:opacity-50 transform hover:scale-[1.02]"
                 >
                   Fill Demo Credentials
                 </button>
@@ -229,43 +220,18 @@ const Login = () => {
             </div>
           </form>
 
-          {/* Footer Links */}
-          <div className="mt-8 space-y-4">
-            <div className="flex justify-center">
-              <Link 
-                to="/forgot-password" 
-                className="text-white/60 hover:text-white text-sm transition-colors duration-200 hover:underline disabled:opacity-50 text-center"
-                tabIndex={isLoading ? -1 : 0}
-              >
-                Forgot your password?
-              </Link>
-            </div>
-            
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-white/50 text-sm text-center">
-                Don't have an account?{' '}
-                <Link 
-                  to="/register" 
-                  className="text-blue-400 font-semibold hover:text-blue-300 transition-all duration-200 hover:underline disabled:opacity-50"
-                  tabIndex={isLoading ? -1 : 0}
-                >
-                  Create account
-                </Link>
+          {/* Enhanced Footer */}
+          <div className="mt-8 pt-6 border-t border-amber-200 dark:border-amber-700/50">
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-amber-600 dark:text-amber-400">
+                Secure Authentication System
               </p>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-amber-500 dark:text-amber-500">System Online</span>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-4 -end-4 size-8 bg-yellow-400/20 rounded-full animate-bounce" />
-        <div className="absolute -bottom-4 -start-4 size-6 bg-cyan-400/20 rounded-full animate-bounce [animation-delay:1000ms]" />
-      </div>
-
-      {/* Security Badge */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-        <div className="flex items-center gap-2 text-white/40 text-xs">
-          <Shield className="size-3" />
-          <span>Secure Authentication</span>
         </div>
       </div>
     </div>

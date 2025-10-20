@@ -1,11 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+// src/App.jsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import DashboardLayout from "./components/Layout/DashboardLayout";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import LoadingSpinner from "./components/UI/LoadingSpinner";
 import ErrorBoundary from "./components/UI/ErrorBoundary";
+import { routes } from "./routes/routes";
 
 // Create a client with enhanced configuration
 const queryClient = new QueryClient({
@@ -27,46 +25,39 @@ const queryClient = new QueryClient({
   },
 });
 
-// Enhanced Protected Route Component
+// Protected Route Component
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
   
-  if (!user) {
-    // Redirect to login with return url
-    return <Navigate to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`} replace />;
-  }
-  
-  return children;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-// Enhanced Public Route Component
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
   
-  // Redirect authenticated users away from public routes
-  if (user) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectTo = urlParams.get("redirect") || "/";
-    return <Navigate to={redirectTo} replace />;
-  }
-  
-  return children;
+  return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 }
 
 // Error Fallback Component
@@ -92,77 +83,48 @@ function ErrorFallback({ error, resetErrorBoundary }) {
   );
 }
 
+// Route Renderer Component
+function RouteRenderer() {
+  return (
+    <Routes>
+      {routes.map((route, index) => {
+        if (route.isPublic) {
+          return (
+            <Route
+              key={index}
+              path={route.path}
+              element={
+                <PublicRoute>
+                  {route.element}
+                </PublicRoute>
+              }
+              exact={route.exact}
+            />
+          );
+        } else {
+          return (
+            <Route
+              key={index}
+              path={route.path}
+              element={
+                <ProtectedRoute>
+                  {route.element}
+                </ProtectedRoute>
+              }
+              exact={route.exact}
+            />
+          );
+        }
+      })}
+    </Routes>
+  );
+}
+
 function AppContent() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-          
-          <Route
-            path="/unauthorized"
-            element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">Unauthorized Access</h1>
-                  <p className="text-gray-600">You don't have permission to access this page.</p>
-                </div>
-              </div>
-            }
-          />
-
-          {/* Protected Routes */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/reports" element={<Dashboard />} />
-                    
-                    {/* 404 Handler for protected routes */}
-                    <Route
-                      path="*"
-                      element={
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-                            <p className="text-gray-600 mb-4">Page not found</p>
-                            <Navigate to="/" replace />
-                          </div>
-                        </div>
-                      }
-                    />
-                  </Routes>
-                </DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Global 404 Handler */}
-          <Route
-            path="*"
-            element={
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-                  <p className="text-gray-600 mb-4">The page you're looking for doesn't exist.</p>
-                  <Navigate to="/" replace />
-                </div>
-              </div>
-            }
-          />
-        </Routes>
+        <RouteRenderer />
       </Router>
     </ErrorBoundary>
   );
