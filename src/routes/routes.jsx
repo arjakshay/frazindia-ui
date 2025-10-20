@@ -3,6 +3,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import Login from '../pages/Login';
+import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
 import Dashboard from '../pages/Dashboard';
 import Analytics from '../pages/Analytics/Analytics';
 import SalesStatement from '../pages/Reports/SalesStatement/SalesStatement';
@@ -119,7 +121,22 @@ export const routes = [
     path: '/login',
     element: <Login />,
     isPublic: true,
-    exact: true
+    exact: true,
+    name: 'Login'
+  },
+  {
+    path: '/register',
+    element: <Register />,
+    isPublic: true,
+    exact: true,
+    name: 'Register'
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+    isPublic: true,
+    exact: true,
+    name: 'Forgot Password'
   },
   
   // Redirects
@@ -221,6 +238,16 @@ export const getNavigationItems = () => {
   return routes.filter(route => route.showInNav);
 };
 
+// Helper function to get public routes
+export const getPublicRoutes = () => {
+  return routes.filter(route => route.isPublic);
+};
+
+// Helper function to get protected routes
+export const getProtectedRoutes = () => {
+  return routes.filter(route => !route.isPublic && route.path !== '/' && route.path !== '*');
+};
+
 // Helper function to get report routes by category
 export const getReportRoutesByCategory = () => {
   const reportRoutes = routes.filter(route => 
@@ -241,6 +268,17 @@ export const getReportRoutesByCategory = () => {
 // Helper function to find route by path
 export const findRouteByPath = (path) => {
   return routes.find(route => route.path === path);
+};
+
+// Helper function to check if route is public
+export const isPublicRoute = (path) => {
+  const route = findRouteByPath(path);
+  return route ? route.isPublic : false;
+};
+
+// Helper function to get authentication redirect path
+export const getAuthRedirectPath = () => {
+  return '/dashboard';
 };
 
 export default routes;

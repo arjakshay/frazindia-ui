@@ -1,4 +1,3 @@
-// src/components/Layout/DashboardLayout.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,7 +14,9 @@ import {
   HelpCircle,
   Download,
   Shield,
-  Sparkles
+  Sparkles,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -25,7 +26,6 @@ const DashboardLayout = ({ children }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
-    // Check localStorage first, then system preference
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('darkMode');
       if (saved !== null) {
@@ -35,12 +35,22 @@ const DashboardLayout = ({ children }) => {
     }
     return false;
   });
-  const [notifications, setNotifications] = useState([]);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [apiSessionExpired, setApiSessionExpired] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const userMenuRef = useRef(null);
   const searchRef = useRef(null);
+  const sessionTimerRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
+  const apiCheckIntervalRef = useRef(null);
+
+  // Session timeout configuration (60 minutes)
+  const SESSION_TIMEOUT = 60 * 60 * 1000; // 60 minutes in milliseconds
+  const WARNING_THRESHOLD = 5 * 60 * 1000; // Show warning 5 minutes before expiry
+  const API_CHECK_INTERVAL = 30 * 1000; // Check API session every 30 seconds
 
   // Sync dark mode with localStorage and document class
   useEffect(() => {
@@ -51,6 +61,229 @@ const DashboardLayout = ({ children }) => {
     }
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  // Session timeout management - Fixed 60 minutes
+  useEffect(() => {
+    const initializeSession = () => {
+      const existingExpiry = localStorage.getItem('sessionExpiry');
+      const sessionId = localStorage.getItem('sessionId');
+      const currentSessionId = localStorage.getItem('currentSessionId');
+      const loginTime = localStorage.getItem('loginTime');
+
+      // If no session exists or session IDs don't match, create new session
+      if (!existingExpiry || sessionId !== currentSessionId || !loginTime) {
+        const expiryTime = Date.now() + SESSION_TIMEOUT;
+        const newSessionId = generateSessionId();
+        
+        localStorage.setItem('sessionExpiry', expiryTime.toString());
+        localStorage.setItem('sessionId', newSessionId);
+        localStorage.setItem('currentSessionId', newSessionId);
+        localStorage.setItem('loginTime', Date.now().toString());
+        
+        setSessionTimeLeft(SESSION_TIMEOUT);
+      } else {
+        const timeLeft = parseInt(existingExpiry) - Date.now();
+        if (timeLeft <= 0) {
+          handleSessionExpiry();
+          return;
+        }
+        setSessionTimeLeft(timeLeft);
+        
+        if (timeLeft <= WARNING_THRESHOLD) {
+          setShowSessionWarning(true);
+        }
+      }
+
+      // Set timeout for session expiry
+      const timeUntilExpiry = getTimeUntilExpiry();
+      if (timeUntilExpiry > 0) {
+        sessionTimerRef.current = setTimeout(() => {
+          handleSessionExpiry();
+        }, timeUntilExpiry);
+
+        // Set timeout for warning
+        const warningTime = timeUntilExpiry - WARNING_THRESHOLD;
+        if (warningTime > 0) {
+          setTimeout(() => {
+            setShowSessionWarning(true);
+          }, warningTime);
+        }
+      }
+    };
+
+    const getTimeUntilExpiry = () => {
+      const expiryTime = parseInt(localStorage.getItem('sessionExpiry') || '0');
+      return Math.max(0, expiryTime - Date.now());
+    };
+
+    const updateSessionCountdown = () => {
+      const expiryTime = parseInt(localStorage.getItem('sessionExpiry') || '0');
+      const timeLeft = expiryTime - Date.now();
+      
+      if (timeLeft > 0) {
+        setSessionTimeLeft(timeLeft);
+        
+        // Check if we need to show warning
+        if (timeLeft <= WARNING_THRESHOLD && !showSessionWarning) {
+          setShowSessionWarning(true);
+        }
+      } else {
+        handleSessionExpiry();
+      }
+    };
+
+    const handleSessionExpiry = () => {
+      console.log('Session expired - forcing logout');
+      cleanupSession();
+      forceLogout();
+    };
+
+    const cleanupSession = () => {
+      if (sessionTimerRef.current) {
+        clearTimeout(sessionTimerRef.current);
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+      if (apiCheckIntervalRef.current) {
+        clearInterval(apiCheckIntervalRef.current);
+      }
+      setShowSessionWarning(false);
+      setSessionTimeLeft(0);
+    };
+
+    const generateSessionId = () => {
+      return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    };
+
+    // API Session Health Check
+    const checkApiSession = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setApiSessionExpired(true);
+          return;
+        }
+
+        // Make a lightweight API call to check session validity
+        const response = await fetch('/api/auth/validate', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          console.log('API session expired detected');
+          setApiSessionExpired(true);
+          handleSessionExpiry();
+        }
+      } catch (error) {
+        console.log('API check failed:', error);
+        // Don't logout on network errors, only on auth errors
+      }
+    };
+
+    // Listen for storage changes (multi-device logout)
+    const handleStorageChange = (e) => {
+      if (e.key === 'forceLogout' || e.key === 'sessionId') {
+        const currentSessionId = localStorage.getItem('currentSessionId');
+        const globalSessionId = localStorage.getItem('sessionId');
+        
+        if (currentSessionId !== globalSessionId) {
+          console.log('Multi-device logout detected');
+          cleanupSession();
+          forceLogout();
+        }
+      }
+      
+      if (e.key === 'apiSessionExpired' && e.newValue === 'true') {
+        console.log('API session expired from another tab');
+        setApiSessionExpired(true);
+        handleSessionExpiry();
+      }
+    };
+
+    // Listen for beforeunload to cleanup
+    const handleBeforeUnload = () => {
+      cleanupSession();
+    };
+
+    // Custom event listener for API session expiry
+    const handleApiSessionExpired = () => {
+      console.log('API session expired event received');
+      setApiSessionExpired(true);
+      handleSessionExpiry();
+    };
+
+    // Initialize session
+    initializeSession();
+
+    // Update countdown every second
+    countdownIntervalRef.current = setInterval(updateSessionCountdown, 1000);
+
+    // Check API session health periodically
+    apiCheckIntervalRef.current = setInterval(checkApiSession, API_CHECK_INTERVAL);
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('apiSessionExpired', handleApiSessionExpired);
+
+    // Global function to trigger session expiry from anywhere in the app
+    window.triggerSessionExpiry = () => {
+      console.log('Manual session expiry triggered');
+      setApiSessionExpired(true);
+      handleSessionExpiry();
+    };
+
+    return () => {
+      cleanupSession();
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('apiSessionExpired', handleApiSessionExpired);
+      delete window.triggerSessionExpiry;
+    };
+  }, [logout, navigate]);
+
+  // Effect to handle API session expiry
+  useEffect(() => {
+    if (apiSessionExpired) {
+      console.log('API session expired - performing logout');
+      handleSessionExpiry();
+    }
+  }, [apiSessionExpired]);
+
+  const forceLogout = async () => {
+    // Set flag to indicate session expired
+    localStorage.setItem('sessionExpired', 'true');
+    
+    // Clear all session data
+    localStorage.removeItem('sessionExpiry');
+    localStorage.removeItem('currentSessionId');
+    localStorage.removeItem('loginTime');
+    
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    if (apiCheckIntervalRef.current) {
+      clearInterval(apiCheckIntervalRef.current);
+    }
+    
+    await logout();
+    
+    // Use window.location for hard redirect to ensure complete logout
+    window.location.href = '/login?session=expired';
+  };
+
+  const handleSessionExpiry = () => {
+    console.log('Session expiry handler called');
+    forceLogout();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,12 +300,42 @@ const DashboardLayout = ({ children }) => {
   }, []);
 
   const handleLogout = async () => {
+    // Clear session data
+    localStorage.removeItem('sessionExpiry');
+    localStorage.removeItem('currentSessionId');
+    localStorage.removeItem('loginTime');
+    
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    if (apiCheckIntervalRef.current) {
+      clearInterval(apiCheckIntervalRef.current);
+    }
+    
     await logout();
     navigate('/login', { replace: true });
   };
 
+  const handleExtendSession = () => {
+    // For fixed session, we don't extend, just hide warning
+    setShowSessionWarning(false);
+  };
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const formatTimeLeft = (milliseconds) => {
+    if (!milliseconds || milliseconds <= 0) return '00:00';
+    
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const mainApps = [
@@ -108,10 +371,16 @@ const DashboardLayout = ({ children }) => {
 
   const currentApp = mainApps.find(app => location.pathname.startsWith(app.path)) || mainApps[0];
 
-  // Enhanced children with darkMode prop
-  const childrenWithDarkMode = React.Children.map(children, child =>
+  // Enhanced children with session expiry handler
+  const childrenWithProps = React.Children.map(children, child =>
     React.isValidElement(child) 
-      ? React.cloneElement(child, { darkMode })
+      ? React.cloneElement(child, { 
+          darkMode,
+          onSessionExpired: () => {
+            console.log('Session expired from child component');
+            setApiSessionExpired(true);
+          }
+        })
       : child
   );
 
@@ -121,6 +390,81 @@ const DashboardLayout = ({ children }) => {
         ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
         : 'bg-gradient-to-br from-gray-50 to-amber-50'
     }`}>
+      {/* Session Expiry Warning Modal */}
+      {showSessionWarning && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className={`max-w-md w-full rounded-3xl p-6 shadow-2xl ${
+            darkMode 
+              ? 'bg-gray-800 border border-amber-500/30' 
+              : 'bg-white border border-amber-300'
+          }`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-500 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-bold ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Session About to Expire
+                </h3>
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Your session will expire in {formatTimeLeft(sessionTimeLeft)}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-sm font-medium ${
+                  darkMode ? 'text-amber-400' : 'text-amber-600'
+                }`}>
+                  Time remaining:
+                </span>
+                <span className={`text-lg font-bold ${
+                  sessionTimeLeft && sessionTimeLeft < 60000 
+                    ? 'text-red-500' 
+                    : darkMode ? 'text-amber-300' : 'text-amber-700'
+                }`}>
+                  {formatTimeLeft(sessionTimeLeft)}
+                </span>
+              </div>
+              <div className={`w-full h-2 rounded-full ${
+                darkMode ? 'bg-gray-700' : 'bg-gray-200'
+              }`}>
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    sessionTimeLeft && sessionTimeLeft < 60000 
+                      ? 'bg-red-500' 
+                      : 'bg-amber-500'
+                  }`}
+                  style={{ 
+                    width: `${Math.max(0, Math.min(100, (sessionTimeLeft / SESSION_TIMEOUT) * 100))}%` 
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2.5 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-medium transition-all duration-200"
+              >
+                Log Out Now
+              </button>
+              <button
+                onClick={handleExtendSession}
+                className="flex-1 py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-all duration-200"
+              >
+                Continue Working
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar Component */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -157,8 +501,7 @@ const DashboardLayout = ({ children }) => {
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                   darkMode 
                     ? 'bg-amber-500/10 border border-amber-500/20' 
-                    : 'bg-amber-50 border border-amber-200'
-                }`}>
+                    : 'bg-amber-50 border border-amber-200'}`}>
                   <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
@@ -181,6 +524,24 @@ const DashboardLayout = ({ children }) => {
 
             {/* Enhanced Right Section */}
             <div className="flex items-center space-x-3">
+              {/* Session Timer */}
+              {sessionTimeLeft && sessionTimeLeft > 0 && (
+                <div className={`flex items-center space-x-2 px-3 py-2 rounded-xl border ${
+                  darkMode 
+                    ? sessionTimeLeft < 60000 
+                      ? 'bg-red-500/10 border-red-500/30 text-red-400' 
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                    : sessionTimeLeft < 60000 
+                      ? 'bg-red-100 border-red-300 text-red-600' 
+                      : 'bg-amber-100 border-amber-300 text-amber-600'
+                } transition-all duration-300`}>
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {formatTimeLeft(sessionTimeLeft)}
+                  </span>
+                </div>
+              )}
+
               {/* Enhanced Quick Actions */}
               <button 
                 className={`p-2.5 rounded-xl transition-all duration-200 ${
@@ -406,7 +767,7 @@ const DashboardLayout = ({ children }) => {
         {/* Enhanced Main Content Area */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
-            {childrenWithDarkMode}
+            {childrenWithProps}
           </div>
         </main>
       </div>

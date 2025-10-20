@@ -15,11 +15,12 @@ import {
   X,
   Home
 } from 'lucide-react';
+import logo from '../../assets/images/frazindia-logo.png';
 
-const Sidebar = ({ 
-  isOpen, 
-  onClose, 
-  isCollapsed, 
+const Sidebar = ({
+  isOpen,
+  onClose,
+  isCollapsed,
   onToggleCollapse,
   darkMode = false
 }) => {
@@ -89,14 +90,14 @@ const Sidebar = ({
   ];
 
   // Simple current app detection
-  const currentApp = mainApps.find(app => 
-    location.pathname === app.path || 
+  const currentApp = mainApps.find(app =>
+    location.pathname === app.path ||
     location.pathname.startsWith(app.path + '/')
   ) || mainApps[0];
 
   // Show analytics reports when on analytics or reports pages
-  const isAnalyticsActive = 
-    location.pathname === '/analytics' || 
+  const isAnalyticsActive =
+    location.pathname === '/analytics' ||
     location.pathname.startsWith('/reports');
 
   const handleAppClick = (app) => {
@@ -129,21 +130,23 @@ const Sidebar = ({
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className={`flex items-center ${isCollapsed ? 'justify-center py-6.5' : 'justify-between p-6'} border-b ${
-            darkMode ? 'border-gray-700' : 'border-amber-200'
-          }`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center py-6.5' : 'justify-between p-6'} border-b ${darkMode ? 'border-gray-700' : 'border-amber-200'
+            }`}>
             {!isCollapsed && (
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center">
-                    <Shield className="w-7 h-7 text-white" />
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-300 to-orange-500 rounded-2xl flex items-center justify-center overflow-hidden">
+                    <img
+                      src={logo}
+                      alt="FrazIndia Logo"
+                      className="w-8 h-8 object-contain"
+                    />
                   </div>
                 </div>
                 <div>
-                  <h1 className={`text-2xl font-bold ${
-                    darkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    Front India
+                  <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
+                    FrazIndia
                   </h1>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Enterprise Platform
@@ -153,8 +156,12 @@ const Sidebar = ({
             )}
             {isCollapsed && (
               <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center">
-                  <Shield className="w-7 h-7 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <img
+                    src={logo}
+                    alt="FrazIndia Logo"
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
               </div>
             )}
@@ -162,11 +169,10 @@ const Sidebar = ({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onToggleCollapse}
-                  className={`p-2 rounded-lg transition-all ${
-                    darkMode 
-                      ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                  className={`p-2 rounded-lg transition-all ${darkMode
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-800'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -185,11 +191,10 @@ const Sidebar = ({
             <div className="flex justify-center py-4 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={onToggleCollapse}
-                className={`p-2 rounded-lg ${
-                  darkMode 
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800' 
+                className={`p-2 rounded-lg ${darkMode
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -202,7 +207,7 @@ const Sidebar = ({
               {mainApps.map((app) => {
                 const isActive = currentApp.id === app.id;
                 const IconComponent = app.icon;
-                
+
                 return (
                   <button
                     key={app.id}
@@ -219,15 +224,13 @@ const Sidebar = ({
                     disabled={app.comingSoon}
                     title={isCollapsed ? app.name : ''}
                   >
-                    <IconComponent className={`w-5 h-5 ${
-                      isActive ? app.activeColor : app.inactiveColor
-                    }`} />
-                    
+                    <IconComponent className={`w-5 h-5 ${isActive ? app.activeColor : app.inactiveColor
+                      }`} />
+
                     {!isCollapsed && (
                       <div className="flex items-center justify-between flex-1">
-                        <span className={`font-medium ${
-                          isActive ? app.activeColor : app.inactiveColor
-                        }`}>
+                        <span className={`font-medium ${isActive ? app.activeColor : app.inactiveColor
+                          }`}>
                           {app.name}
                         </span>
                         {app.comingSoon && (
@@ -254,14 +257,12 @@ const Sidebar = ({
               </div>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium truncate ${
-                    darkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <p className={`font-medium truncate ${darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                     {user?.name || 'User'}
                   </p>
-                  <p className={`text-sm truncate ${
-                    darkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <p className={`text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                     {user?.designation || 'User Role'}
                   </p>
                 </div>

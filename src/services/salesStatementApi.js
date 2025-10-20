@@ -112,6 +112,15 @@ export const reportMetaAPI = {
       method: 'POST',
       body: JSON.stringify(payload)
     });
+  },
+
+  // Get divisions
+  getDivisions: async (payload) => {
+    console.log('Fetching divisions with payload:', payload);
+    return await fetchWithAuth(`${API_BASE_URL}/fipl/report-meta/get-division`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
   }
 };
 
@@ -177,6 +186,17 @@ export const salesStatementAPI = {
 
 // Utility functions for payload creation
 export const payloadUtils = {
+  // Create divisions payload
+  createDivisionsPayload: (user) => {
+    const payload = {
+      loginDiv: user?.loginDiv || user?.division?.[0]?.split(' | ')[0] || '00',
+      loginUserid: user?.userId || user?.loginUserid,
+      loginHlevel: user?.hierarchyLevel || user?.loginHlevel || 'H12',
+      reportName: "SALES_STMT"
+    };
+    return payload;
+  },
+
   // Create sales groups payload
   createSalesGroupsPayload: (user, selectedDivisions) => {
     const payload = {
@@ -224,7 +244,8 @@ export const payloadUtils = {
       div: filters.division.join(','),
       showSalespers: filters.showSalesPerson ? 'Y' : '',
       level: filters.level || '',
-      hcode: filters.hcode || ''
+      hcode: filters.hcode || '',
+      salesPerson: filters.salesPerson || ''
     };
     return payload;
   }
