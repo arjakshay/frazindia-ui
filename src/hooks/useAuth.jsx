@@ -1,4 +1,6 @@
+// src/hooks/useAuth.js
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -14,9 +16,11 @@ export function AuthProvider({ children }) {
     try {
       const token = localStorage.getItem('authToken');
       if (token) {
-        setUser({ id: 1, name: 'Demo User', email: 'demo@frazindia.com' });
+        const userData = await authAPI.getCurrentUser();
+        setUser(userData);
       }
     } catch (error) {
+      console.error('Auth check failed:', error);
       localStorage.removeItem('authToken');
     } finally {
       setLoading(false);
@@ -24,31 +28,44 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (credentials) => {
-    const response = { 
-      token: 'demo-token', 
-      user: { id: 1, name: 'Demo User', email: credentials.username } 
-    };
-    localStorage.setItem('authToken', response.token);
-    setUser(response.user);
+    const response = await authAPI.login(credentials);
+    if (response.token) {
+      localStorage.setItem('authToken', response.token);
+      setUser(response.user);
+    }
     return response;
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('authToken');
+      setUser(null);
+    }
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+    isAuthenticated: !!user
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
