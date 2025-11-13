@@ -146,7 +146,7 @@ const Sidebar = ({
                 <div>
                   <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'
                     }`}>
-                    FrazIndia
+                    FRAZINDIA 2.0
                   </h1>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Enterprise Platform

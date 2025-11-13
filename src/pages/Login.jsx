@@ -234,7 +234,7 @@ const Login = () => {
               </div>
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-700 to-amber-800 dark:from-amber-300 dark:to-amber-200 bg-clip-text text-transparent mb-2">
-              FrazIndia
+              FRAZINDIA 2.0
             </h1>
             <p className="text-amber-700/80 dark:text-amber-300/80 text-lg">Welcome back! Please sign in</p>
           </div>

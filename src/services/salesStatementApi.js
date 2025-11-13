@@ -6,7 +6,7 @@ const getAuthToken = () => {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
 };
 
-// Enhanced error handling with timeout
+// Enhanced error handling with better response parsing
 const handleResponse = async (response) => {
   if (!response.ok) {
     const errorText = await response.text();
@@ -22,7 +22,19 @@ const handleResponse = async (response) => {
     throw new Error(errorMessage);
   }
   
-  return response.json();
+  // Get response text first
+  const responseText = await response.text();
+  
+  // Try to parse as JSON
+  try {
+    if (!responseText || responseText.trim() === '') {
+      return null;
+    }
+    return JSON.parse(responseText);
+  } catch (e) {
+    console.warn('Response is not valid JSON, returning as text:', responseText);
+    return { data: responseText };
+  }
 };
 
 // Get common headers with authorization
@@ -63,7 +75,9 @@ const fetchWithAuth = async (url, options = {}, timeout = 30000) => {
     clearTimeout(timeoutId);
     console.log('Response status:', response.status);
     
-    return await handleResponse(response);
+    const result = await handleResponse(response);
+    console.log('Response data:', result);
+    return result;
   } catch (error) {
     clearTimeout(timeoutId);
     console.error('API call failed:', error);
@@ -97,21 +111,57 @@ export const reportMetaAPI = {
   },
 
   // Get sales levels
-  getSalesLevels: async (payload) => {
-    console.log('Fetching sales levels with payload:', payload);
-    return await fetchWithAuth(`${API_BASE_URL}/fipl/report-meta/get-sales-level`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  },
+  // In reportMetaAPI object:
+getSalesLevels: async (payload) => {
+  console.log('Fetching sales levels with payload:', payload);
+  const result = await fetchWithAuth(`${API_BASE_URL}/fipl/report-meta/get-sales-level`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  
+  console.log('Raw sales levels response:', result);
+  
+  // Return the array directly if it's already an array
+  if (Array.isArray(result)) {
+    return result;
+  }
+  // Otherwise return the data property or empty array
+  return result?.data || [];
+},
 
-  // Get sales persons
+  // Get sales persons - FIXED: Enhanced response handling
   getSalesPersons: async (payload) => {
     console.log('Fetching sales persons with payload:', payload);
-    return await fetchWithAuth(`${API_BASE_URL}/fipl/report-meta/get-sales-person`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+    try {
+      const result = await fetchWithAuth(`${API_BASE_URL}/fipl/report-meta/get-sales-person`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Raw sales persons response:', result);
+      
+      // Handle different response formats
+      if (Array.isArray(result)) {
+        return result;
+      } else if (result && typeof result === 'object') {
+        // Check for common response structures
+        if (Array.isArray(result.data)) {
+          return result.data;
+        } else if (Array.isArray(result.result)) {
+          return result.result;
+        } else if (Array.isArray(result.items)) {
+          return result.items;
+        }
+        // If it's an object but not with expected array properties, return as single item array
+        return [result];
+      }
+      
+      console.warn('Unexpected sales persons response format, returning empty array');
+      return [];
+    } catch (error) {
+      console.error('Error in getSalesPersons:', error);
+      return [];
+    }
   },
 
   // Get divisions
@@ -127,21 +177,29 @@ export const reportMetaAPI = {
 // Sales Statement Report APIs
 export const salesStatementAPI = {
   // Get report data with longer timeout for large data
-  getReportData: async (payload) => {
-    console.log('Generating report with payload:', payload);
-    const data = await fetchWithAuth(`${API_BASE_URL}/fipl/sales-statement/get-report-data`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    }, 60000); // 60 second timeout for report data
-    
-    // Fix the typo in the response field name
-    if (data && data.sales_statemet) {
-      data.sales_statement = data.sales_statemet;
-      delete data.sales_statemet;
+  // In salesStatementAPI object:
+// In salesStatementAPI object:
+getReportData: async (payload) => {
+  console.log('Generating report with payload:', payload);
+  const data = await fetchWithAuth(`${API_BASE_URL}/fipl/sales-statement/get-report-data`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, 60000); // 60 second timeout for report data
+  
+  console.log('Raw report data response:', data);
+  
+  // Fix the typo in the response field name - return corrected data
+  if (data) {
+    const correctedData = { ...data };
+    if (data.sales_statemet) {
+      correctedData.sales_statement = data.sales_statemet;
+      delete correctedData.sales_statemet;
     }
-    
-    return data;
-  },
+    return correctedData;
+  }
+  
+  return data;
+},
 
   // Generate Excel report
   generateExcel: async (payload) => {
@@ -218,10 +276,12 @@ export const payloadUtils = {
     return payload;
   },
 
-  // Create sales persons payload
+  // Create sales persons payload - FIXED: Match working code structure
   createSalesPersonsPayload: (user, filters) => {
+    const loginDiv = user?.loginDiv || user?.division?.[0]?.split(' | ')[0] || '00';
+    
     const payload = {
-      loginDiv: user?.loginDiv || user?.division?.[0]?.split(' | ')[0] || '00',
+      loginDiv: loginDiv,
       loginUserid: user?.userId || user?.loginUserid,
       loginHlevel: user?.hierarchyLevel || user?.loginHlevel || 'H12',
       reportName: "SALES_STMT",
@@ -229,24 +289,37 @@ export const payloadUtils = {
       hLevel: filters.level,
       salesGroup: filters.salesGroup.join(',')
     };
+    
+    console.log('Sales Persons Payload:', payload);
     return payload;
   },
 
-  // Create report data payload
+  // Create report data payload - FIXED: Match working code structure
   createReportDataPayload: (user, filters) => {
+    const loginDiv = user?.loginDiv || user?.division?.[0]?.split(' | ')[0] || '00';
+    
     const payload = {
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
       salesGroup: filters.salesGroup.join(','),
-      loginDiv: user?.loginDiv || user?.division?.[0]?.split(' | ')[0] || '00',
+      loginDiv: loginDiv,
       loginUserid: user?.userId || user?.loginUserid,
       loginHlevel: user?.hierarchyLevel || user?.loginHlevel || 'H12',
-      div: filters.division.join(','),
-      showSalespers: filters.showSalesPerson ? 'Y' : '',
-      level: filters.level || '',
-      hcode: filters.hcode || '',
-      salesPerson: filters.salesPerson || ''
+      div: filters.division.join(',')
     };
+    
+    // Conditionally add sales person fields based on working code logic
+    if (filters.showSalesPerson || loginDiv !== '00') {
+      payload.showSalespers = 'Y';
+      payload.level = filters.level || '';
+      payload.hcode = filters.hcode || '';
+    } else {
+      payload.showSalespers = '';
+      payload.level = '';
+      payload.hcode = '';
+    }
+    
+    console.log('Report Data Payload:', payload);
     return payload;
   }
 };
