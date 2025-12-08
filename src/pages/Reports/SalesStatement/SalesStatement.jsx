@@ -152,7 +152,12 @@ const SalesStatement = ({ darkMode = false }) => {
   });
 
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const getValue = (value) => {
@@ -459,12 +464,12 @@ const SalesStatement = ({ darkMode = false }) => {
     }
 
     console.log('=== TABLE DATA DEBUG ===');
-console.log('Report data available:', !!reportData);
-console.log('Sales data available:', !!(reportData?.sales_statement || reportData?.sales_statemet));
-console.log('Sales data length:', (reportData?.sales_statement || reportData?.sales_statemet)?.length);
-console.log('First row sample:', (reportData?.sales_statement || reportData?.sales_statemet)?.[0]);
-console.log('Column definitions:', getColumnDefinitions().length);
-console.log('========================');
+    console.log('Report data available:', !!reportData);
+    console.log('Sales data available:', !!(reportData?.sales_statement || reportData?.sales_statemet));
+    console.log('Sales data length:', (reportData?.sales_statement || reportData?.sales_statemet)?.length);
+    console.log('First row sample:', (reportData?.sales_statement || reportData?.sales_statemet)?.[0]);
+    console.log('Column definitions:', getColumnDefinitions().length);
+    console.log('========================');
     console.log('=== END DEBUG ===');
   };
 
@@ -952,8 +957,8 @@ console.log('========================');
     };
 
     if (!grandTotal) {
-    return <div className={`p-4 text-center ${darkMode ? 'text-amber-300' : 'text-amber-600'}`}>Loading summary...</div>;
-  }
+      return <div className={`p-4 text-center ${darkMode ? 'text-amber-300' : 'text-amber-600'}`}>Loading summary...</div>;
+    }
 
     const thisMonthSalesUnits = grandTotal?.curr_month_units__base;
     const thisMonthSalesRV = grandTotal?.curr_month_rv;
@@ -1123,14 +1128,30 @@ console.log('========================');
         field: "categoryName",
         pinned: "left",
         width: 120,
-        cellStyle: { fontWeight: '500' }
+        cellStyle: { 
+          fontWeight: '500',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }
       },
       {
         headerName: "Products",
         field: "descr",
         pinned: "left",
-        width: 180,
-        cellStyle: { fontWeight: '500' }
+        width: 200,
+        cellStyle: { 
+          fontWeight: '500',
+          whiteSpace: 'normal',
+          wordWrap: 'break-word',
+          lineHeight: '1.2',
+          minHeight: '40px',
+          padding: '8px 4px'
+        },
+        valueFormatter: (params) => {
+          if (!params.value) return '';
+          return params.value;
+        }
       },
 
       // CURRENT MONTH SALES
@@ -1142,13 +1163,13 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "curr_month_units__base",
-            width: 100,
+            width: 90,
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "curr_month_rv",
-            width: 120,
+            width: 100,
             valueFormatter: (params) => formatNumber(params?.value),
           },
         ],
@@ -1163,13 +1184,13 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "prev_yr_units__base",
-            width: 100,
+            width: 90,
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "pre_yr_rv",
-            width: 120,
+            width: 100,
             valueFormatter: (params) => formatNumber(params?.value),
           },
         ],
@@ -1184,13 +1205,13 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "monthly_growth_unit__base",
-            width: 100,
+            width: 80,
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
           {
             headerName: "RV",
             field: "monthly_growth_rv",
-            width: 100,
+            width: 80,
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
         ],
@@ -1205,7 +1226,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "current_month_target__base",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#f7c9ac" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1221,7 +1242,7 @@ console.log('========================');
           {
             headerName: "RV",
             field: "monthly_achi",
-            width: 80,
+            width: 70,
             cellStyle: { backgroundColor: "#ffe597" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1237,7 +1258,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "monthly_contri__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ffccff" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(2)}` : "0",
           },
@@ -1253,14 +1274,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "curr_qtr_units__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "curr_qtr_rv",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1276,14 +1297,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "prev_yr_qtr_units__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "prev_yr_qtr_rv",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1299,14 +1320,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "qtr_growth_unit__base",
-            width: 100,
+            width: 80,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
           {
             headerName: "RV",
             field: "qtr_growth_rv",
-            width: 100,
+            width: 80,
             cellStyle: { backgroundColor: "#87CEEB" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1322,7 +1343,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "curr_qtr_target__base",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#f7c9ac" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1338,7 +1359,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "qtr_achi__base",
-            width: 80,
+            width: 70,
             cellStyle: { backgroundColor: "#ffe597" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1354,7 +1375,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "qtr_contri__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ffccff" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(2)}` : "0",
           },
@@ -1370,14 +1391,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "curr_yr_cumm_units__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "curr_yr_cumm_rv",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1393,14 +1414,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "prev_yr_cumm_units__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "RV",
             field: "prev_yr_cumm_rv",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1416,14 +1437,14 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "cumm_growth_unit__base",
-            width: 100,
+            width: 80,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
           {
             headerName: "RV",
             field: "cumm_growth_rv",
-            width: 100,
+            width: 80,
             cellStyle: { backgroundColor: "#ffff98" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1439,7 +1460,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "cumm_target__base",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#f7c9ac" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1455,7 +1476,7 @@ console.log('========================');
           {
             headerName: "RV",
             field: "cumm_achi__base",
-            width: 80,
+            width: 70,
             cellStyle: { backgroundColor: "#ffe597" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1471,7 +1492,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "cumm_contri__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ffccff" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(2)}` : "0",
           },
@@ -1487,7 +1508,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "annually_target__base",
-            width: 120,
+            width: 100,
             cellStyle: { backgroundColor: "#c8c8c8" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1503,7 +1524,7 @@ console.log('========================');
           {
             headerName: "UNITS",
             field: "achievement__base",
-            width: 80,
+            width: 70,
             cellStyle: { backgroundColor: "#ffe597" },
             valueFormatter: (params) => params?.value ? `${params.value.toFixed(0)}` : "0",
           },
@@ -1519,14 +1540,14 @@ console.log('========================');
           {
             headerName: "MONTHLY",
             field: "ypm_mothly__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ff6699" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
           {
             headerName: "CUMM",
             field: "ypm_cumm__base",
-            width: 100,
+            width: 90,
             cellStyle: { backgroundColor: "#ff6699" },
             valueFormatter: (params) => formatNumber(params?.value),
           },
@@ -1777,379 +1798,362 @@ console.log('========================');
       </div>
 
 
-{/* Report Data Section */}
-{reportData && (reportData.sales_statement || reportData.sales_statemet) && (
-  <div className="space-y-6">
-    {/* Summary Metrics with Enhanced Design */}
-    <div className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${
-      darkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-amber-500/20' : 'bg-gradient-to-br from-white to-amber-50 border-amber-200'
-    }`}>
-      <div className="p-6 border-b border-amber-500/20">
-        <div className="flex items-center justify-between">
-          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
-            Performance Overview
-          </h3>
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-            darkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'
-          }`}>
-            {filters.fromDate} to {filters.toDate}
-          </div>
-        </div>
-        <p className={`text-sm mt-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-          Comprehensive sales performance metrics and trends
-        </p>
-      </div>
-      <div className="p-6">
-        <SummaryMetrics
-          grandTotal={grandTotal}
-          monthlyAchievements={monthlyAchievements}
-          prependData={prependData}
-        />
-      </div>
-    </div>
-
-    {/* Data Table Section with Enhanced Header */}
-    <div className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${
-      darkMode ? 'bg-gray-800/80 border-amber-500/20' : 'bg-white/80 border-amber-200'
-    }`}>
-      {/* Table Header with Stats */}
-      <div className="p-6 border-b border-amber-500/20">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
-              Detailed Sales Statement
-            </h3>
-            <p className={`text-sm mt-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-              Comprehensive breakdown of sales performance across all categories
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {/* Record Count */}
-            <div className={`px-3 py-2 rounded-lg ${
-              darkMode ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+      {/* Report Data Section */}
+      {reportData && (reportData.sales_statement || reportData.sales_statemet) && (
+        <div className="space-y-6">
+          {/* Summary Metrics with Enhanced Design */}
+          <div className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${darkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-amber-500/20' : 'bg-gradient-to-br from-white to-amber-50 border-amber-200'
             }`}>
-              <div className={`text-xs font-medium ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                Records
+            <div className="p-6 border-b border-amber-500/20">
+              <div className="flex items-center justify-between">
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
+                  Performance Overview
+                </h3>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${darkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                  {filters.fromDate} to {filters.toDate}
+                </div>
               </div>
-              <div className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
-                {(reportData.sales_statement || reportData.sales_statemet).length}
+              <p className={`text-sm mt-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                Comprehensive sales performance metrics and trends
+              </p>
+            </div>
+            <div className="p-6">
+              <SummaryMetrics
+                grandTotal={grandTotal}
+                monthlyAchievements={monthlyAchievements}
+                prependData={prependData}
+              />
+            </div>
+          </div>
+
+          {/* Data Table Section with Enhanced Header */}
+          <div className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${darkMode ? 'bg-gray-800/80 border-amber-500/20' : 'bg-white/80 border-amber-200'
+            }`}>
+            {/* Table Header with Stats */}
+            <div className="p-6 border-b border-amber-500/20">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
+                    Detailed Sales Statement
+                  </h3>
+                  <p className={`text-sm mt-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                    Comprehensive breakdown of sales performance across all categories
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Record Count */}
+                  <div className={`px-3 py-2 rounded-lg ${darkMode ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+                    }`}>
+                    <div className={`text-xs font-medium ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                      Records
+                    </div>
+                    <div className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
+                      {(reportData.sales_statement || reportData.sales_statemet).length}
+                    </div>
+                  </div>
+
+                  {/* Table Navigation */}
+                  <div className="flex items-center gap-2">
+                    <div className={`text-xs font-medium mr-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                      Scroll
+                    </div>
+                    <button
+                      onClick={() => scrollTable('left')}
+                      className={`p-2 rounded-lg border transition-all duration-200 ${darkMode
+                        ? 'bg-gray-700 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
+                        : 'bg-white border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400'
+                        }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => scrollTable('right')}
+                      className={`p-2 rounded-lg border transition-all duration-200 ${darkMode
+                        ? 'bg-gray-700 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
+                        : 'bg-white border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400'
+                        }`}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Table Navigation */}
-            <div className="flex items-center gap-2">
-              <div className={`text-xs font-medium mr-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                Scroll
+            {/* Enhanced Table Container */}
+            <div className="relative">
+              {/* Scroll Indicator */}
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-amber-500/20 z-20 ${tableScrollPosition > 0 ? 'opacity-100' : 'opacity-0'
+                } transition-opacity duration-200`}>
+                <div
+                  className="h-full bg-amber-500 transition-all duration-200"
+                  style={{
+                    width: `${Math.min((tableScrollPosition / 1000) * 100, 100)}%`
+                  }}
+                />
               </div>
-              <button
-                onClick={() => scrollTable('left')}
-                className={`p-2 rounded-lg border transition-all duration-200 ${
-                  darkMode
-                    ? 'bg-gray-700 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
-                    : 'bg-white border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400'
-                }`}
+
+              {/* Table with Enhanced Styling */}
+              <div
+                className="table-container overflow-x-auto relative scroll-smooth"
+                style={{ 
+                  maxHeight: '70vh',
+                  minWidth: '100%'
+                }}
+                onScroll={(e) => setTableScrollPosition(e.target.scrollLeft)}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <table className="w-full min-w-max" style={{ tableLayout: 'auto' }}>
+                  <thead>
+                    {/* Main Headers */}
+                    <tr className={darkMode ? 'bg-amber-500/10' : 'bg-amber-50'}>
+                      {getColumnDefinitions().map((colDef, index) => {
+                        if (!colDef.children) {
+                          return (
+                            <th
+                              key={index}
+                              className={`px-3 py-3 text-left text-xs font-semibold border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${darkMode
+                                ? 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/15'
+                                : 'text-amber-800 bg-amber-50 hover:bg-amber-100'
+                                }`}
+                              style={{
+                                width: colDef.width,
+                                position: colDef.pinned ? 'sticky' : 'static',
+                                left: colDef.pinned ? (index === 0 ? 0 : colDef.width) : 'auto',
+                                zIndex: colDef.pinned ? 20 : 10,
+                                ...colDef.cellStyle
+                              }}
+                              colSpan="1"
+                            >
+                              <div className="flex items-center gap-1">
+                                {colDef.headerName}
+                                {colDef.pinned && (
+                                  <div className={`w-1 h-3 rounded ${darkMode ? 'bg-amber-500' : 'bg-amber-400'
+                                    }`} />
+                                )}
+                              </div>
+                            </th>
+                          );
+                        }
+
+                        return (
+                          <th
+                            key={index}
+                            className={`px-3 py-3 text-center text-xs font-semibold border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${darkMode
+                              ? 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/15'
+                              : 'text-amber-800 bg-amber-50 hover:bg-amber-100'
+                              }`}
+                            style={{
+                              width: colDef.width,
+                            }}
+                            colSpan={colDef.children.length}
+                          >
+                            {colDef.headerName}
+                          </th>
+                        );
+                      })}
+                    </tr>
+
+                    {/* Child Headers */}
+                    <tr className={darkMode ? 'bg-amber-500/5' : 'bg-amber-50/70'}>
+                      {getColumnDefinitions().flatMap((colDef, index) => {
+                        if (!colDef.children) {
+                          return [
+                            <th
+                              key={`${index}-child`}
+                              className={`px-3 py-2 text-left text-xs font-medium border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${darkMode
+                                ? 'text-amber-400 bg-amber-500/5 hover:bg-amber-500/10'
+                                : 'text-amber-700 bg-amber-50/70 hover:bg-amber-100'
+                                }`}
+                              style={{
+                                width: colDef.width,
+                                position: colDef.pinned ? 'sticky' : 'static',
+                                left: colDef.pinned ? (index === 0 ? 0 : colDef.width) : 'auto',
+                                zIndex: colDef.pinned ? 20 : 10
+                              }}
+                            >
+                              {/* Optional: Add sub-header content if needed */}
+                            </th>
+                          ];
+                        }
+
+                        return colDef.children.map((childCol, childIndex) => (
+                          <th
+                            key={`${index}-${childIndex}`}
+                            className={`px-3 py-2 text-center text-xs font-medium border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${darkMode
+                              ? 'text-amber-400 bg-amber-500/5 hover:bg-amber-500/10'
+                              : 'text-amber-700 bg-amber-50/70 hover:bg-amber-100'
+                              }`}
+                            style={{
+                              width: childCol.width,
+                              ...childCol.cellStyle
+                            }}
+                          >
+                            {childCol.headerName}
+                          </th>
+                        ));
+                      })}
+                    </tr>
+                  </thead>
+
+                  {/* Table Body with Enhanced Rows */}
+                  <tbody className="divide-y divide-amber-500/10">
+                    {(reportData.sales_statement || reportData.sales_statemet).map((item, rowIndex) => (
+                      <tr
+                        key={rowIndex}
+                        className={`group transition-all duration-200 ${item.isGrandTotal
+                          ? darkMode
+                            ? 'bg-amber-500/20 hover:bg-amber-500/25'
+                            : 'bg-amber-100 hover:bg-amber-200'
+                          : item.isTotalRow
+                            ? darkMode
+                              ? 'bg-green-500/10 hover:bg-green-500/15'
+                              : 'bg-green-50 hover:bg-green-100'
+                            : darkMode
+                              ? 'hover:bg-amber-500/5'
+                              : 'hover:bg-amber-50'
+                          } ${getRowStyle(item)}`}
+                      >
+                        {getColumnDefinitions().flatMap((colDef, colIndex) => {
+                          if (!colDef.children) {
+                            return [
+                              <td
+                                key={colIndex}
+                                className={`px-3 py-2 text-xs border-r border-amber-500/20 transition-colors duration-200 ${darkMode ? 'text-gray-200' : 'text-gray-800'
+                                  }`}
+                                style={{
+                                  width: colDef.width,
+                                  position: colDef.pinned ? 'sticky' : 'static',
+                                  left: colDef.pinned ? (colIndex === 0 ? 0 : colDef.width) : 'auto',
+                                  zIndex: colDef.pinned ? 15 : 1,
+                                  backgroundColor: 'inherit',
+                                  ...colDef.cellStyle
+                                }}
+                              >
+                                <div className={`${item.isGrandTotal || item.isTotalRow ? 'font-semibold' : ''}`}>
+                                  {colDef.valueFormatter
+                                    ? colDef.valueFormatter({ value: item[colDef.field] })
+                                    : item[colDef.field]
+                                  }
+                                </div>
+                              </td>
+                            ];
+                          }
+
+                          return colDef.children.map((childCol, childIndex) => {
+                            const value = item[childCol.field];
+                            const isPercentage = childCol.field?.includes('growth') ||
+                              childCol.field?.includes('achi') ||
+                              childCol.field?.includes('contri');
+
+                            return (
+                              <td
+                                key={`${colIndex}-${childIndex}`}
+                                className={`px-3 py-2 text-xs border-r border-amber-500/20 text-center transition-colors duration-200 ${darkMode ? 'text-gray-200' : 'text-gray-800'
+                                  } ${isPercentage && typeof value === 'number'
+                                    ? value >= 0
+                                      ? darkMode ? 'text-green-400' : 'text-green-600'
+                                      : darkMode ? 'text-red-400' : 'text-red-600'
+                                    : ''
+                                  }`}
+                                style={{
+                                  width: childCol.width,
+                                  ...childCol.cellStyle
+                                }}
+                              >
+                                <div className={`${item.isGrandTotal || item.isTotalRow ? 'font-semibold' : ''} ${isPercentage && typeof value === 'number' && value < 0 ? 'animate-pulse' : ''
+                                  }`}>
+                                  {childCol.valueFormatter
+                                    ? childCol.valueFormatter({ value })
+                                    : value
+                                  }
+                                </div>
+                              </td>
+                            );
+                          });
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Footer with Summary */}
+              <div className={`border-t border-amber-500/20 p-4 ${darkMode ? 'bg-gray-800/80' : 'bg-amber-50/50'
+                }`}>
+                <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+                  <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                    <div className={`w-2 h-2 rounded-full ${darkMode ? 'bg-green-400' : 'bg-green-500'
+                      }`} />
+                    <span>Total Rows</span>
+                    <span className={`font-semibold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
+                      {(reportData.sales_statement || reportData.sales_statemet).length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                      <div className={`w-3 h-3 rounded ${darkMode ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-amber-100 border border-amber-300'
+                        }`} />
+                      <span>Category Total</span>
+                    </div>
+
+                    <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                      <div className={`w-3 h-3 rounded ${darkMode ? 'bg-amber-500/40 border border-amber-500/60' : 'bg-amber-200 border border-amber-400'
+                        }`} />
+                      <span>Grand Total</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => document.querySelector('.table-container')?.scrollTo({ left: 0, behavior: 'smooth' })}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${darkMode
+                      ? 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                      : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      }`}
+                  >
+                    Scroll to Start
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions Footer */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className={`text-sm ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+              Report generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleExportPDF}
+                disabled={!reportData}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${darkMode
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/40'
+                  : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400'
+                  } ${!reportData ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Export PDF</span>
               </button>
+
               <button
-                onClick={() => scrollTable('right')}
-                className={`p-2 rounded-lg border transition-all duration-200 ${
-                  darkMode
-                    ? 'bg-gray-700 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50'
-                    : 'bg-white border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400'
-                }`}
+                onClick={handleExportExcel}
+                disabled={!reportData}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${darkMode
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/40'
+                  : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400'
+                  } ${!reportData ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <ChevronRight className="w-4 h-4" />
+                <Download className="w-4 h-4" />
+                <span>Export Excel</span>
               </button>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Enhanced Table Container */}
-      <div className="relative">
-        {/* Scroll Indicator */}
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-amber-500/20 z-20 ${
-          tableScrollPosition > 0 ? 'opacity-100' : 'opacity-0'
-        } transition-opacity duration-200`}>
-          <div 
-            className="h-full bg-amber-500 transition-all duration-200"
-            style={{ 
-              width: `${Math.min((tableScrollPosition / 1000) * 100, 100)}%` 
-            }}
-          />
-        </div>
-
-        {/* Table with Enhanced Styling */}
-        <div 
-          className="table-container overflow-x-auto relative scroll-smooth"
-          style={{ maxHeight: '70vh' }}
-          onScroll={(e) => setTableScrollPosition(e.target.scrollLeft)}
-        >
-          <table className="w-full min-w-max">
-            <thead>
-              {/* Main Headers */}
-              <tr className={darkMode ? 'bg-amber-500/10' : 'bg-amber-50'}>
-                {getColumnDefinitions().map((colDef, index) => {
-                  if (!colDef.children) {
-                    return (
-                      <th
-                        key={index}
-                        className={`px-4 py-4 text-left text-sm font-semibold border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${
-                          darkMode 
-                            ? 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/15' 
-                            : 'text-amber-800 bg-amber-50 hover:bg-amber-100'
-                        }`}
-                        style={{
-                          minWidth: colDef.width,
-                          position: colDef.pinned ? 'sticky' : 'static',
-                          left: colDef.pinned ? (index === 0 ? 0 : colDef.width) : 'auto',
-                          zIndex: colDef.pinned ? 20 : 10
-                        }}
-                        colSpan="1"
-                      >
-                        <div className="flex items-center gap-2">
-                          {colDef.headerName}
-                          {colDef.pinned && (
-                            <div className={`w-1 h-4 rounded ${
-                              darkMode ? 'bg-amber-500' : 'bg-amber-400'
-                            }`} />
-                          )}
-                        </div>
-                      </th>
-                    );
-                  }
-                  
-                  return (
-                    <th
-                      key={index}
-                      className={`px-4 py-4 text-center text-sm font-semibold border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${
-                        darkMode 
-                          ? 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/15' 
-                          : 'text-amber-800 bg-amber-50 hover:bg-amber-100'
-                      }`}
-                      style={{
-                        minWidth: colDef.width,
-                      }}
-                      colSpan={colDef.children.length}
-                    >
-                      {colDef.headerName}
-                    </th>
-                  );
-                })}
-              </tr>
-              
-              {/* Child Headers */}
-              <tr className={darkMode ? 'bg-amber-500/5' : 'bg-amber-50/70'}>
-                {getColumnDefinitions().flatMap((colDef, index) => {
-                  if (!colDef.children) {
-                    return [
-                      <th
-                        key={`${index}-child`}
-                        className={`px-4 py-3 text-left text-xs font-medium border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${
-                          darkMode 
-                            ? 'text-amber-400 bg-amber-500/5 hover:bg-amber-500/10' 
-                            : 'text-amber-700 bg-amber-50/70 hover:bg-amber-100'
-                        }`}
-                        style={{
-                          minWidth: colDef.width,
-                          position: colDef.pinned ? 'sticky' : 'static',
-                          left: colDef.pinned ? (index === 0 ? 0 : colDef.width) : 'auto',
-                          zIndex: colDef.pinned ? 20 : 10
-                        }}
-                      >
-                        {/* Optional: Add sub-header content if needed */}
-                      </th>
-                    ];
-                  }
-                  
-                  return colDef.children.map((childCol, childIndex) => (
-                    <th
-                      key={`${index}-${childIndex}`}
-                      className={`px-4 py-3 text-center text-xs font-medium border-r border-amber-500/20 whitespace-nowrap transition-colors duration-200 ${
-                        darkMode 
-                          ? 'text-amber-400 bg-amber-500/5 hover:bg-amber-500/10' 
-                          : 'text-amber-700 bg-amber-50/70 hover:bg-amber-100'
-                      }`}
-                      style={{
-                        minWidth: childCol.width,
-                      }}
-                    >
-                      {childCol.headerName}
-                    </th>
-                  ));
-                })}
-              </tr>
-            </thead>
-            
-            {/* Table Body with Enhanced Rows */}
-            <tbody className="divide-y divide-amber-500/10">
-              {(reportData.sales_statement || reportData.sales_statemet).map((item, rowIndex) => (
-                <tr 
-                  key={rowIndex} 
-                  className={`group transition-all duration-200 ${
-                    item.isGrandTotal 
-                      ? darkMode 
-                        ? 'bg-amber-500/20 hover:bg-amber-500/25' 
-                        : 'bg-amber-100 hover:bg-amber-200'
-                      : item.isTotalRow
-                      ? darkMode
-                        ? 'bg-green-500/10 hover:bg-green-500/15'
-                        : 'bg-green-50 hover:bg-green-100'
-                      : darkMode
-                        ? 'hover:bg-amber-500/5'
-                        : 'hover:bg-amber-50'
-                  } ${getRowStyle(item)}`}
-                >
-                  {getColumnDefinitions().flatMap((colDef, colIndex) => {
-                    if (!colDef.children) {
-                      return [
-                        <td
-                          key={colIndex}
-                          className={`px-4 py-3 text-sm border-r border-amber-500/20 transition-colors duration-200 ${
-                            darkMode ? 'text-gray-200' : 'text-gray-800'
-                          }`}
-                          style={{
-                            position: colDef.pinned ? 'sticky' : 'static',
-                            left: colDef.pinned ? (colIndex === 0 ? 0 : colDef.width) : 'auto',
-                            zIndex: colDef.pinned ? 15 : 1,
-                            backgroundColor: 'inherit',
-                            ...(colDef.cellStyle || {})
-                          }}
-                        >
-                          <div className={item.isGrandTotal || item.isTotalRow ? 'font-semibold' : ''}>
-                            {colDef.valueFormatter
-                              ? colDef.valueFormatter({ value: item[colDef.field] })
-                              : item[colDef.field]
-                            }
-                          </div>
-                        </td>
-                      ];
-                    }
-                    
-                    return colDef.children.map((childCol, childIndex) => {
-                      const value = item[childCol.field];
-                      const isPercentage = childCol.field?.includes('growth') || 
-                                         childCol.field?.includes('achi') || 
-                                         childCol.field?.includes('contri');
-                      
-                      return (
-                        <td
-                          key={`${colIndex}-${childIndex}`}
-                          className={`px-4 py-3 text-sm border-r border-amber-500/20 text-center transition-colors duration-200 ${
-                            darkMode ? 'text-gray-200' : 'text-gray-800'
-                          } ${
-                            isPercentage && typeof value === 'number' 
-                              ? value >= 0 
-                                ? darkMode ? 'text-green-400' : 'text-green-600'
-                                : darkMode ? 'text-red-400' : 'text-red-600'
-                              : ''
-                          }`}
-                          style={{
-                            ...(childCol.cellStyle || {})
-                          }}
-                        >
-                          <div className={`${item.isGrandTotal || item.isTotalRow ? 'font-semibold' : ''} ${
-                            isPercentage && typeof value === 'number' && value < 0 ? 'animate-pulse' : ''
-                          }`}>
-                            {childCol.valueFormatter
-                              ? childCol.valueFormatter({ value })
-                              : value
-                            }
-                          </div>
-                        </td>
-                      );
-                    });
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Table Footer with Summary */}
-        <div className={`border-t border-amber-500/20 p-4 ${
-          darkMode ? 'bg-gray-800/80' : 'bg-amber-50/50'
-        }`}>
-          <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-            <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${
-                darkMode ? 'bg-green-400' : 'bg-green-500'
-              }`} />
-              <span>Total Rows</span>
-              <span className={`font-semibold ${darkMode ? 'text-white' : 'text-amber-800'}`}>
-                {(reportData.sales_statement || reportData.sales_statemet).length}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                <div className={`w-3 h-3 rounded ${
-                  darkMode ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-amber-100 border border-amber-300'
-                }`} />
-                <span>Category Total</span>
-              </div>
-              
-              <div className={`flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                <div className={`w-3 h-3 rounded ${
-                  darkMode ? 'bg-amber-500/40 border border-amber-500/60' : 'bg-amber-200 border border-amber-400'
-                }`} />
-                <span>Grand Total</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => document.querySelector('.table-container')?.scrollTo({ left: 0, behavior: 'smooth' })}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                darkMode
-                  ? 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-                  : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-              }`}
-            >
-              Scroll to Start
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Quick Actions Footer */}
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className={`text-sm ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-        Report generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
-      </div>
-      
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleExportPDF}
-          disabled={!reportData}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${
-            darkMode
-              ? 'bg-amber-500/10 border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/40'
-              : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400'
-          } ${!reportData ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>Export PDF</span>
-        </button>
-
-        <button
-          onClick={handleExportExcel}
-          disabled={!reportData}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${
-            darkMode
-              ? 'bg-amber-500/10 border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/40'
-              : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400'
-          } ${!reportData ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Download className="w-4 h-4" />
-          <span>Export Excel</span>
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       {/* Loading State */}
       {generating && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
