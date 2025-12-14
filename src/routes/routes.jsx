@@ -13,6 +13,7 @@ import DispatchSummary from '../pages/Reports/DispatchSummary/DispatchSummary';
 import MonthlyCumulativeRevaluation from '../pages/Reports/MonthlyCumulativeRevaluation/MonthlyCumulativeRevaluation.jsx';
 import MonthlyCumulativeYPM from '../pages/Reports/MonthlyCumulativeYPM/MonthlyCumulativeYPM';
 import MonthlyCumulativeYPMProductGroup from '../pages/Reports/MonthlyCumulativeYPMProductGroup/MonthlyCumulativeYPMProductGroup';
+import LocationWiseFilter from '../pages/Reports/LocationWise/LocationWiseFilter';
 
 // Create wrapper components that pass darkMode to DashboardLayout
 function DashboardWithLayout() {
@@ -79,6 +80,14 @@ function MonthlyCumulativeYPMProductGroupWithLayout() {
   );
 }
 
+function LocationWiseWithLayout() {
+    return (
+      <DashboardLayout>
+        <LocationWiseFilter />
+      </DashboardLayout>
+    );
+  }
+
 // 404 Component
 function NotFoundPage() {
   return (
@@ -86,7 +95,7 @@ function NotFoundPage() {
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-4">Page not found</p>
-        <button 
+        <button
           onClick={() => window.history.back()}
           className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition-colors"
         >
@@ -103,7 +112,7 @@ function ReportNotFoundPage() {
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-4">Report not found</p>
-        <button 
+        <button
           onClick={() => window.history.back()}
           className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition-colors"
         >
@@ -138,7 +147,7 @@ export const routes = [
     exact: true,
     name: 'Forgot Password'
   },
-  
+
   // Redirects
   {
     path: '/',
@@ -155,7 +164,7 @@ export const routes = [
     showInNav: true,
     icon: 'dashboard'
   },
-  
+
   {
     path: '/analytics',
     element: <AnalyticsWithLayout />,
@@ -164,7 +173,7 @@ export const routes = [
     showInNav: true,
     icon: 'analytics'
   },
-  
+
   // Report Routes
   {
     path: '/reports/sales-stmt',
@@ -174,7 +183,7 @@ export const routes = [
     category: 'sales',
     description: 'Detailed sales performance and revenue analysis'
   },
-  
+
   {
     path: '/reports/dispatch-stmt',
     element: <DispatchStatementWithLayout />,
@@ -183,7 +192,7 @@ export const routes = [
     category: 'operations',
     description: 'Real-time product dispatch and delivery tracking'
   },
-  
+
   {
     path: '/reports/dispatch-summ',
     element: <DispatchSummaryWithLayout />,
@@ -192,7 +201,7 @@ export const routes = [
     category: 'operations',
     description: 'Comprehensive summary of dispatch operations'
   },
-  
+
   {
     path: '/reports/mon-cumm-reval',
     element: <MonthlyCumulativeRevaluationWithLayout />,
@@ -201,7 +210,7 @@ export const routes = [
     category: 'finance',
     description: 'Advanced financial revaluation and asset tracking'
   },
-  
+
   {
     path: '/reports/mon-cumm-ypm',
     element: <MonthlyCumulativeYPMWithLayout />,
@@ -210,7 +219,7 @@ export const routes = [
     category: 'performance',
     description: 'Yearly Performance Measurement analysis'
   },
-  
+
   {
     path: '/reports/mon-cumm-ypm-prdgrp',
     element: <MonthlyCumulativeYPMProductGroupWithLayout />,
@@ -219,13 +228,21 @@ export const routes = [
     category: 'performance',
     description: 'Granular product group performance measurement'
   },
-  
+  {
+    path: '/reports/location-wise',
+    element: <LocationWiseWithLayout />,
+    exact: true,
+    name: 'Location Wise Sales',
+    category: 'sales',
+    description: 'Comprehensive sales analysis by geographic location'
+  },
+
   // Catch-all route for undefined report paths
   {
     path: '/reports/*',
     element: <ReportNotFoundPage />
   },
-  
+
   // 404 Handler for all other routes
   {
     path: '*',
@@ -250,10 +267,10 @@ export const getProtectedRoutes = () => {
 
 // Helper function to get report routes by category
 export const getReportRoutesByCategory = () => {
-  const reportRoutes = routes.filter(route => 
+  const reportRoutes = routes.filter(route =>
     route.path.startsWith('/reports/') && route.name
   );
-  
+
   const categories = {};
   reportRoutes.forEach(route => {
     if (!categories[route.category]) {
@@ -261,7 +278,7 @@ export const getReportRoutesByCategory = () => {
     }
     categories[route.category].push(route);
   });
-  
+
   return categories;
 };
 

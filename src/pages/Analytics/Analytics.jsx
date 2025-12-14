@@ -22,7 +22,12 @@ import {
   Star,
   BarChart,
   PieChart,
-  LineChart
+  LineChart,
+  MapPin,
+  Layers,
+  Activity,
+  Globe,
+  Building
 } from 'lucide-react';
 
 const Analytics = ({ darkMode = false }) => {
@@ -50,6 +55,24 @@ const Analytics = ({ darkMode = false }) => {
       trend: 'up',
       views: '2.4K',
       favorite: true
+    },
+    {
+      id: 'location-wise',
+      name: 'Location Wise Sales',
+      description: 'Comprehensive sales analysis by geographic location with region-wise breakdown, territory performance, and location-based insights.',
+      icon: MapPin,
+      path: '/reports/location-wise',
+      color: darkMode ? 'from-indigo-400 to-purple-400' : 'from-indigo-500 to-purple-500',
+      bgColor: darkMode ? 'bg-indigo-500/10' : 'bg-indigo-50',
+      borderColor: darkMode ? 'border-indigo-500/20' : 'border-indigo-200',
+      category: 'sales',
+      popularity: 89,
+      lastUpdated: '1 hour ago',
+      records: '850K+',
+      trend: 'up',
+      views: '1.9K',
+      favorite: true,
+      new: true
     },
     {
       id: 'dispatch-stmt',
@@ -135,15 +158,50 @@ const Analytics = ({ darkMode = false }) => {
       trend: 'stable',
       views: '1.5K',
       favorite: false
+    },
+    {
+      id: 'territory-analysis',
+      name: 'Territory Analysis',
+      description: 'Deep dive into territory-wise performance with heat maps, regional comparisons, and market penetration insights.',
+      icon: Globe,
+      path: '/reports/territory-analysis',
+      color: darkMode ? 'from-teal-400 to-cyan-400' : 'from-teal-500 to-cyan-500',
+      bgColor: darkMode ? 'bg-teal-500/10' : 'bg-teal-50',
+      borderColor: darkMode ? 'border-teal-500/20' : 'border-teal-200',
+      category: 'sales',
+      popularity: 84,
+      lastUpdated: '3 hours ago',
+      records: 'Regional',
+      trend: 'up',
+      views: '1.4K',
+      favorite: false
+    },
+    {
+      id: 'regional-performance',
+      name: 'Regional Performance',
+      description: 'Multi-region performance tracking with comparative analysis, growth metrics, and opportunity identification.',
+      icon: Building,
+      path: '/reports/regional-performance',
+      color: darkMode ? 'from-amber-400 to-orange-400' : 'from-amber-500 to-orange-500',
+      bgColor: darkMode ? 'bg-amber-500/10' : 'bg-amber-50',
+      borderColor: darkMode ? 'border-amber-500/20' : 'border-amber-200',
+      category: 'sales',
+      popularity: 87,
+      lastUpdated: '2 hours ago',
+      records: 'Multi-region',
+      trend: 'stable',
+      views: '1.6K',
+      favorite: true
     }
   ];
 
   const categories = [
     { id: 'all', name: 'All Reports', count: reports.length, icon: BarChart3 },
-    { id: 'sales', name: 'Sales', count: reports.filter(r => r.category === 'sales').length, icon: TrendingUp },
+    { id: 'sales', name: 'Sales Analytics', count: reports.filter(r => r.category === 'sales').length, icon: TrendingUp },
     { id: 'operations', name: 'Operations', count: reports.filter(r => r.category === 'operations').length, icon: Package },
     { id: 'finance', name: 'Finance', count: reports.filter(r => r.category === 'finance').length, icon: LineChart },
-    { id: 'performance', name: 'Performance', count: reports.filter(r => r.category === 'performance').length, icon: Target }
+    { id: 'performance', name: 'Performance', count: reports.filter(r => r.category === 'performance').length, icon: Target },
+    { id: 'location', name: 'Location Based', count: reports.filter(r => r.id.includes('location') || r.id.includes('territory') || r.id.includes('regional')).length, icon: MapPin }
   ];
 
   const timeFrames = [
@@ -157,7 +215,8 @@ const Analytics = ({ darkMode = false }) => {
     { id: 'popular', name: 'Most Popular' },
     { id: 'recent', name: 'Recently Updated' },
     { id: 'name', name: 'Name (A-Z)' },
-    { id: 'views', name: 'Most Viewed' }
+    { id: 'views', name: 'Most Viewed' },
+    { id: 'new', name: 'New Features' }
   ];
 
   const filteredReports = reports
@@ -165,9 +224,13 @@ const Analytics = ({ darkMode = false }) => {
       report.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .filter(report => 
-      selectedCategory === 'all' || report.category === selectedCategory
-    )
+    .filter(report => {
+      if (selectedCategory === 'all') return true;
+      if (selectedCategory === 'location') {
+        return report.id.includes('location') || report.id.includes('territory') || report.id.includes('regional');
+      }
+      return report.category === selectedCategory;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'popular':
@@ -178,6 +241,10 @@ const Analytics = ({ darkMode = false }) => {
           return a.name.localeCompare(b.name);
         case 'views':
           return parseInt(b.views) - parseInt(a.views);
+        case 'new':
+          const aNew = a.new ? 1 : 0;
+          const bNew = b.new ? 1 : 0;
+          return bNew - aNew;
         default:
           return 0;
       }
@@ -200,7 +267,7 @@ const Analytics = ({ darkMode = false }) => {
     {
       name: 'Total Reports',
       value: reports.length.toString(),
-      change: '+12.5%',
+      change: '+15.5%',
       changeType: 'positive',
       icon: BarChart3,
       description: 'Available reports',
@@ -209,20 +276,20 @@ const Analytics = ({ darkMode = false }) => {
       borderColor: darkMode ? 'border-blue-500/20' : 'border-blue-200'
     },
     {
-      name: 'Active Users',
-      value: '1,234',
-      change: '+8.2%',
-      changeType: 'positive',
-      icon: Users,
-      description: 'Online now',
-      color: darkMode ? 'text-green-400' : 'text-green-600',
-      bgColor: darkMode ? 'bg-green-500/10' : 'bg-green-50',
-      borderColor: darkMode ? 'border-green-500/20' : 'border-green-200'
+      name: 'Location Analytics',
+      value: '4',
+      change: 'New Feature',
+      changeType: 'new',
+      icon: MapPin,
+      description: 'Location-based reports',
+      color: darkMode ? 'text-indigo-400' : 'text-indigo-600',
+      bgColor: darkMode ? 'bg-indigo-500/10' : 'bg-indigo-50',
+      borderColor: darkMode ? 'border-indigo-500/20' : 'border-indigo-200'
     },
     {
       name: 'Data Processed',
-      value: '1.5M+',
-      change: '+15.7%',
+      value: '2.3M+',
+      change: '+18.7%',
       changeType: 'positive',
       icon: Package,
       description: 'This month',
@@ -231,33 +298,41 @@ const Analytics = ({ darkMode = false }) => {
       borderColor: darkMode ? 'border-purple-500/20' : 'border-purple-200'
     },
     {
-      name: 'Avg Performance',
-      value: '98.7%',
-      change: '+2.3%',
+      name: 'Active Analysis',
+      value: '98.9%',
+      change: '+3.1%',
       changeType: 'positive',
-      icon: Target,
-      description: 'System uptime',
+      icon: Activity,
+      description: 'Real-time accuracy',
       color: darkMode ? 'text-amber-400' : 'text-amber-600',
       bgColor: darkMode ? 'bg-amber-500/10' : 'bg-amber-50',
       borderColor: darkMode ? 'border-amber-500/20' : 'border-amber-200'
     }
   ];
 
+  // Featured Reports - Highlight location-based reports
+  const featuredReports = reports.filter(report => 
+    report.id === 'location-wise' || 
+    report.id === 'sales-stmt' || 
+    report.id === 'mon-cumm-ypm'
+  );
+
   return (
     <div className="space-y-6">
       {/* Enhanced Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-3 flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <BarChart3 className="w-7 h-7 text-white" />
+                <MapPin className="w-7 h-7 text-white" />
               </div>
-              Analytics Dashboard
+              Advanced Analytics Dashboard
             </h1>
             <p className="text-blue-100 text-lg opacity-90 max-w-2xl">
-              Discover powerful insights with our comprehensive analytics suite. Access real-time data, <span className="font-semibold">predictive analytics</span>, and <span className="font-semibold">interactive reports</span>.
+              Discover powerful insights with our comprehensive analytics suite. Access <span className="font-semibold">real-time data</span>, 
+              <span className="font-semibold"> location-based insights</span>, and <span className="font-semibold">predictive analytics</span>.
             </p>
           </div>
           <div className="hidden lg:block">
@@ -290,7 +365,7 @@ const Analytics = ({ darkMode = false }) => {
               index === 0 
                 ? darkMode ? 'from-blue-500/5 to-blue-500/10' : 'from-blue-50 to-blue-100'
                 : index === 1 
-                ? darkMode ? 'from-green-500/5 to-green-500/10' : 'from-green-50 to-green-100'
+                ? darkMode ? 'from-indigo-500/5 to-indigo-500/10' : 'from-indigo-50 to-indigo-100'
                 : index === 2 
                 ? darkMode ? 'from-purple-500/5 to-purple-500/10' : 'from-purple-50 to-purple-100'
                 : darkMode ? 'from-amber-500/5 to-amber-500/10' : 'from-amber-50 to-amber-100'
@@ -324,23 +399,176 @@ const Analytics = ({ darkMode = false }) => {
               <div className={`flex items-center space-x-2 text-sm font-semibold ${
                 stat.changeType === 'positive' 
                   ? darkMode ? 'text-green-400' : 'text-green-600'
+                  : stat.changeType === 'new'
+                  ? darkMode ? 'text-indigo-400' : 'text-indigo-600'
                   : darkMode ? 'text-red-400' : 'text-red-600'
               }`}>
                 {stat.changeType === 'positive' ? (
                   <ArrowUp className="w-4 h-4" />
+                ) : stat.changeType === 'new' ? (
+                  <Sparkles className="w-4 h-4" />
                 ) : (
                   <ArrowDown className="w-4 h-4" />
                 )}
                 <span>{stat.change}</span>
-                <span className={`font-normal ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  from last month
-                </span>
               </div>
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Featured Reports Section */}
+      <div className={`rounded-2xl p-6 border shadow-sm ${
+        darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className={`text-xl font-bold flex items-center gap-2 mb-2 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              <Sparkles className={`w-5 h-5 ${darkMode ? 'text-amber-400' : 'text-amber-500'}`} />
+              Featured Reports
+            </h2>
+            <p className={`text-sm ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Most popular and newly added analytics tools
+            </p>
+          </div>
+          <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+            darkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
+          }`}>
+            <MapPin className="w-3 h-3" />
+            Location Analytics Focus
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featuredReports.map((report, index) => {
+            const IconComponent = report.icon;
+            return (
+              <div
+                key={report.id}
+                onClick={() => handleReportClick(report)}
+                onMouseEnter={() => setHoveredCard(index + 100)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className={`group cursor-pointer transform transition-all duration-300 ${
+                  report.id === 'location-wise' 
+                    ? 'md:col-span-2' 
+                    : ''
+                }`}
+              >
+                <div className={`rounded-2xl border p-6 h-full transition-all duration-300 group-hover:border-indigo-300 dark:group-hover:border-indigo-500 relative overflow-hidden ${
+                  darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                }`}>
+                  {/* Special badge for location-wise report */}
+                  {report.id === 'location-wise' && (
+                    <div className="absolute top-4 right-4">
+                      <div className={`px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                        darkMode ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white'
+                      }`}>
+                        <Sparkles className="w-3 h-3" />
+                        NEW
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hover effect background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                    report.id === 'location-wise'
+                      ? darkMode ? 'from-indigo-500/10 to-purple-500/10' : 'from-indigo-50 to-purple-50'
+                      : report.id === 'sales-stmt'
+                      ? darkMode ? 'from-blue-500/10 to-cyan-500/10' : 'from-blue-50 to-cyan-50'
+                      : darkMode ? 'from-indigo-500/10 to-blue-500/10' : 'from-indigo-50 to-blue-50'
+                  }`}></div>
+
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`p-3 rounded-xl bg-gradient-to-r ${report.color} shadow-lg`}>
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {report.favorite && (
+                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                        )}
+                        {getTrendIcon(report.trend)}
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          darkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {report.popularity}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <h3 className={`text-xl font-semibold mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${
+                      darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {report.name}
+                    </h3>
+                    <p className={`text-sm mb-4 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {report.description}
+                    </p>
+
+                    {/* Special features for location-wise report */}
+                    {report.id === 'location-wise' && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`px-2 py-1 rounded text-xs ${
+                            darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            Geographic Analysis
+                          </div>
+                          <div className={`px-2 py-1 rounded text-xs ${
+                            darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            Region Wise
+                          </div>
+                          <div className={`px-2 py-1 rounded text-xs ${
+                            darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            Territory Tracking
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-3 h-3 text-gray-400" />
+                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            {report.views}
+                          </span>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full ${
+                          darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {report.records}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-gray-400" />
+                          <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
+                            {report.lastUpdated}
+                          </span>
+                        </div>
+                      </div>
+                      <button className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group-hover:bg-indigo-500 group-hover:text-white ${
+                        darkMode 
+                          ? 'bg-gray-700 text-indigo-400' 
+                          : 'bg-gray-100 text-indigo-700'
+                      }`}>
+                        <span>Explore</span>
+                        <Zap className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Enhanced Controls Section */}
@@ -353,29 +581,37 @@ const Analytics = ({ darkMode = false }) => {
             {categories.map((category) => {
               const IconComponent = category.icon;
               const isActive = selectedCategory === category.id;
+              const isLocationCategory = category.id === 'location';
               return (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl whitespace-nowrap transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl whitespace-nowrap transition-all duration-200 relative ${
                     isActive
                       ? darkMode 
-                        ? 'bg-amber-500/20 border border-amber-500/30 text-amber-400' 
-                        : 'bg-amber-50 border border-amber-200 text-amber-700'
+                        ? 'bg-indigo-500/20 border border-indigo-500/30 text-indigo-400' 
+                        : 'bg-indigo-50 border border-indigo-200 text-indigo-700'
                       : darkMode
                         ? 'bg-gray-700 border border-gray-600 text-gray-300 hover:bg-gray-600'
                         : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
+                  } ${isLocationCategory && category.count > 0 ? 'pr-8' : ''}`}
                 >
                   <IconComponent className="w-4 h-4" />
                   <span className="font-medium">{category.name}</span>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                     isActive
-                      ? darkMode ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-100 text-amber-700'
+                      ? darkMode ? 'bg-indigo-500/30 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
                       : darkMode ? 'bg-gray-600 text-gray-400' : 'bg-gray-100 text-gray-500'
                   }`}>
                     {category.count}
                   </span>
+                  {isLocationCategory && category.count > 0 && (
+                    <span className="absolute -top-1 -right-1">
+                      <div className={`w-2 h-2 rounded-full animate-ping ${
+                        darkMode ? 'bg-indigo-400' : 'bg-indigo-500'
+                      }`}></div>
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -392,8 +628,8 @@ const Analytics = ({ darkMode = false }) => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`pl-10 pr-4 py-3 rounded-xl border transition-all duration-200 min-w-64 ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20'
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
                 }`}
               />
             </div>
@@ -405,8 +641,8 @@ const Analytics = ({ darkMode = false }) => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className={`px-4 py-3 rounded-xl border transition-all duration-200 ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20'
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20'
                 }`}
               >
                 {sortOptions.map(option => (
@@ -426,8 +662,8 @@ const Analytics = ({ darkMode = false }) => {
               </button>
               <button className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 ${
                 darkMode 
-                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20' 
-                  : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20' 
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
               }`}>
                 <Filter className="w-4 h-4" />
                 Filters
@@ -441,6 +677,7 @@ const Analytics = ({ darkMode = false }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredReports.map((report, index) => {
           const IconComponent = report.icon;
+          const isLocationReport = report.id.includes('location') || report.id.includes('territory') || report.id.includes('regional');
           return (
             <div
               key={report.id}
@@ -449,14 +686,44 @@ const Analytics = ({ darkMode = false }) => {
               onMouseLeave={() => setHoveredCard(null)}
               className={`group cursor-pointer transform transition-all duration-300 hover:scale-105 ${
                 darkMode ? 'hover:shadow-2xl' : 'hover:shadow-xl'
-              }`}
+              } ${isLocationReport ? 'md:col-span-1' : ''}`}
             >
-              <div className={`rounded-2xl border p-6 h-full transition-all duration-300 group-hover:border-amber-300 dark:group-hover:border-amber-500 relative overflow-hidden ${
+              <div className={`rounded-2xl border p-6 h-full transition-all duration-300 ${
+                isLocationReport 
+                  ? 'group-hover:border-indigo-300 dark:group-hover:border-indigo-500' 
+                  : 'group-hover:border-indigo-300 dark:group-hover:border-indigo-500'
+              } relative overflow-hidden ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               }`}>
+                {/* New badge for location reports */}
+                {report.new && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                      darkMode ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white'
+                    }`}>
+                      <Sparkles className="w-3 h-3" />
+                      NEW
+                    </div>
+                  </div>
+                )}
+
+                {/* Location report indicator */}
+                {isLocationReport && !report.new && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+                      darkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
+                    }`}>
+                      <MapPin className="w-3 h-3" />
+                      Location
+                    </div>
+                  </div>
+                )}
+
                 {/* Hover effect background */}
                 <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                  report.category === 'sales'
+                  isLocationReport
+                    ? darkMode ? 'from-indigo-500/5 to-purple-500/5' : 'from-indigo-50 to-purple-50'
+                    : report.category === 'sales'
                     ? darkMode ? 'from-blue-500/5 to-blue-500/10' : 'from-blue-50 to-blue-100'
                     : report.category === 'operations'
                     ? darkMode ? 'from-green-500/5 to-green-500/10' : 'from-green-50 to-green-100'
@@ -485,7 +752,11 @@ const Analytics = ({ darkMode = false }) => {
                   </div>
 
                   {/* Content */}
-                  <h3 className={`text-xl font-semibold mb-3 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors ${
+                  <h3 className={`text-xl font-semibold mb-3 ${
+                    isLocationReport 
+                      ? 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400' 
+                      : 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                  } transition-colors ${
                     darkMode ? 'text-white' : 'text-gray-900'
                   }`}>
                     {report.name}
@@ -495,6 +766,24 @@ const Analytics = ({ darkMode = false }) => {
                   }`}>
                     {report.description}
                   </p>
+
+                  {/* Location-specific features */}
+                  {isLocationReport && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className={`px-2 py-1 rounded text-xs ${
+                          darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          Geographic Data
+                        </div>
+                        <div className={`px-2 py-1 rounded text-xs ${
+                          darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          Region Analysis
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Footer */}
                   <div className="flex items-center justify-between mt-6">
@@ -517,12 +806,16 @@ const Analytics = ({ darkMode = false }) => {
                         </span>
                       </div>
                     </div>
-                    <button className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group-hover:bg-amber-500 group-hover:text-white ${
+                    <button className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isLocationReport
+                        ? 'group-hover:bg-indigo-500 group-hover:text-white'
+                        : 'group-hover:bg-indigo-500 group-hover:text-white'
+                    } ${
                       darkMode 
-                        ? 'bg-gray-700 text-amber-400' 
-                        : 'bg-gray-100 text-amber-700'
+                        ? isLocationReport ? 'bg-gray-700 text-indigo-400' : 'bg-gray-700 text-indigo-400' 
+                        : isLocationReport ? 'bg-gray-100 text-indigo-700' : 'bg-gray-100 text-indigo-700'
                     }`}>
-                      <span>View</span>
+                      <span>{isLocationReport ? 'Explore' : 'View'}</span>
                       <Zap className="w-3 h-3" />
                     </button>
                   </div>
@@ -538,24 +831,72 @@ const Analytics = ({ darkMode = false }) => {
         <div className={`rounded-2xl p-12 text-center border ${
           darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}>
-          <BarChart3 className={`w-20 h-20 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+          <MapPin className={`w-20 h-20 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
           <h3 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             No reports found
           </h3>
           <p className={`text-lg mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Try adjusting your search or filter criteria
           </p>
-          <button 
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
-          >
-            Clear Filters
-          </button>
+          <div className="flex gap-4 justify-center">
+            <button 
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
+            >
+              Clear Filters
+            </button>
+            <button 
+              onClick={() => handleReportClick(reports.find(r => r.id === 'location-wise'))}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
+            >
+              Explore Location Analytics
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Quick Stats Bar */}
+      <div className={`rounded-2xl p-6 border ${
+        darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div>
+            <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+              {reports.filter(r => r.category === 'sales').length}
+            </div>
+            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Sales Reports
+            </div>
+          </div>
+          <div>
+            <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+              {reports.filter(r => r.favorite).length}
+            </div>
+            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Favorites
+            </div>
+          </div>
+          <div>
+            <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+              {reports.filter(r => r.trend === 'up').length}
+            </div>
+            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Growing Reports
+            </div>
+          </div>
+          <div>
+            <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+              {reports.filter(r => r.new).length}
+            </div>
+            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              New Features
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
